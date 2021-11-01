@@ -6,6 +6,8 @@ setup(){
 }
 
 _date(){
+	echo "@#@#@#@#@ hostname"
+	hostname
 	echo "@#@#@#@#@ begin logs"
 	date
 }
@@ -37,7 +39,7 @@ packages(){
 	echo "@#@#@#@#@ installed packages"
 	apt list --installed 2> /dev/null | wc -l
 	echo "@#@#@#@#@ packages with updates"
-	apt list –upgradable 2> /dev/null | wc -l
+	apt list --upgradable 2> /dev/null | wc -l
 }
 
 services(){
@@ -60,8 +62,10 @@ _uptime(){
 	echo "$N_Crash"
 	echo "@#@#@#@#@ reboots this month"
 	echo "$N_Reboot"
-}
 
+	echo "@#@#@#@#@ packages requiring a restart"
+	sort /var/run/reboot-required.pkgs | uniq
+}
 
 { setup ;
 	_date ;
