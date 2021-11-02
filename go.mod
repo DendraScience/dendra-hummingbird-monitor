@@ -11,12 +11,14 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.23.1
 require (
 	cloud.google.com/go/bigquery v1.0.1
 	github.com/BurntSushi/toml v0.3.1
+	github.com/docker/docker v20.10.10+incompatible
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/moby/moby v20.10.10+incompatible
 	github.com/prometheus/procfs v0.6.0
 	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
+	google.golang.org/appengine v1.6.5
 	k8s.io/apimachinery v0.20.6
 	k8s.io/client-go v0.20.6
 )
@@ -27,7 +29,6 @@ require (
 	github.com/containerd/containerd v1.5.7 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v20.10.10+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/go-logr/logr v0.2.0 // indirect
@@ -59,7 +60,6 @@ require (
 	golang.org/x/tools v0.1.1 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.15.0 // indirect
-	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a // indirect
 	google.golang.org/grpc v1.33.2 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
