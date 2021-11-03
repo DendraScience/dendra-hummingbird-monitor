@@ -111,38 +111,44 @@ func queryMetrics(ctx context.Context, client *bigquery.Client, data QuarterHour
 	return err
 }
 func queryContainers(ctx context.Context, client *bigquery.Client, data QuarterHourly) error {
-	for _, container := range data.Containers {
-		qstring := `INSERT INTO ` + projectID + "." + containerDataSet + "." + containerTableName + `(hostname, version, id, timestamp, image, name, created, cpu_percent, memory_usage, memory_allowed, memory_percent, uptime) VALUES`
-		qstring += "(?,?,?,?,?,?,?,?,?,?,?,?);"
-		query := client.Query(qstring)
-		query.Parameters = []bigquery.QueryParameter{
-			{Value: data.Hostname},
-			{Value: data.Version},
-			{Value: container.ID},
-			{Value: data.Timestamp},
-			{Value: container.Image},
-			{Value: container.Name},
-			{Value: container.Created},
-			{Value: container.CPU},
-			{Value: container.MemUsage},
-			{Value: container.MemAllowed},
-			{Value: container.MemPercent},
-			{Value: container.Uptime},
+	qstring := `INSERT INTO ` + projectID + "." + containerDataSet + "." + containerTableName + `(hostname, version, id, timestamp, image, name, created, cpu_percent, memory_usage, memory_allowed, memory_percent, uptime) VALUES`
+	qps := []bigquery.QueryParameter{}
+	for i, container := range data.Containers {
+		if i == len(data.Containers)-1 {
+			qstring += "(?,?,?,?,?,?,?,?,?,?,?,?);"
+		} else {
+			qstring += "(?,?,?,?,?,?,?,?,?,?,?,?),"
 		}
-		job, err := query.Run(ctx)
-		if err != nil {
-			log.Printf("Error creating container query job: %s", err.Error())
-			log.Printf("Query: %s", qstring)
-			return err
-		}
-		stat, err := job.Wait(ctx)
-		if err != nil {
-			log.Printf("Error running container query: %s", err.Error())
-			return err
-		}
-		if stat.Err() != nil {
-			return stat.Err()
-		}
+		qps = append(qps,
+			[]bigquery.QueryParameter{{Value: data.Hostname},
+				{Value: data.Version},
+				{Value: container.ID},
+				{Value: data.Timestamp},
+				{Value: container.Image},
+				{Value: container.Name},
+				{Value: container.Created},
+				{Value: container.CPU},
+				{Value: container.MemUsage},
+				{Value: container.MemAllowed},
+				{Value: container.MemPercent},
+				{Value: container.Uptime}}...)
 	}
+	query := client.Query(qstring)
+	query.Parameters = qps
+	job, err := query.Run(ctx)
+	if err != nil {
+		log.Printf("Error creating container query job: %s", err.Error())
+		log.Printf("Query: %s", qstring)
+		return err
+	}
+	stat, err := job.Wait(ctx)
+	if err != nil {
+		log.Printf("Error running container query: %s", err.Error())
+		return err
+	}
+	if stat.Err() != nil {
+		return stat.Err()
+	}
+
 	return nil
 }
