@@ -13,7 +13,7 @@
 	"name":"id",
 	"type":"STRING",
 	"mode":"REQUIRED"
-  }
+  },
   {
     "name": "timestamp",
     "type": "TIMESTAMP",
