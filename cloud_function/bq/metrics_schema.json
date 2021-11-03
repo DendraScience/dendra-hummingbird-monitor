@@ -1,0 +1,102 @@
+[
+  {
+    "name": "hostname",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "collection_time",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "disk_usage",
+    "type": "FLOAT",
+    "mode": "required"
+  },
+  {
+    "name": "disk_free",
+    "type": "FLOAT",
+    "mode": "required"
+  },
+  {
+    "name": "lan_bytes_down",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "lan_bytes_up",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "memory_total",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "memory_avail",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "memory_cached",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "memory_free",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "processor_count",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "load_average",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "num_packages",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "updates_available",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "wan_bytes_down",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "wan_bytes_up",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "uptime",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "wan_ip",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "lan_ip",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  }
+]
