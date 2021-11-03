@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/DendraScience/dendra_hummingbird_monitor/config"
+	"github.com/DendraScience/dendra_hummingbird_monitor/cpu"
 	"github.com/DendraScience/dendra_hummingbird_monitor/disk"
 	"github.com/DendraScience/dendra_hummingbird_monitor/docker"
 	"github.com/DendraScience/dendra_hummingbird_monitor/pkg"
@@ -62,12 +63,6 @@ func main() {
 		var stats QuarterHourly
 		var err error
 		startTime := time.Now()
-		stats.Hostname = hostname
-
-		stats.DiskFree, stats.DiskUsage = disk.GetDiskFreeAndUsagePercentage()
-		stats.NumPackages = pkg.GetInstalledPackageCount()
-		stats.Timestamp = startTime
-		stats.UpdatesAvail = pkg.GetNumAvailUpdates()
 
 		stats.WANBytesUp, stats.WANBytesDown, err = proc.GetNetworkUpDown(config.WAN())
 		if err != nil {
@@ -81,9 +76,36 @@ func main() {
 		if err != nil {
 			log.Error(err)
 		}
-
+		stats.MemAvail, err = proc.GetAvailMemory()
+		if err != nil {
+			log.Error(err)
+		}
+		stats.MemBuffered, err = proc.GetCachedMemory()
+		if err != nil {
+			log.Error(err)
+		}
+		stats.MemTotal, err = proc.GetTotalMemory()
+		if err != nil {
+			log.Error(err)
+		}
+		stats.LoadAverage, err = proc.GetLoad()
+		if err != nil {
+			log.Error(err)
+		}
+		stats.ProcessorCount = cpu.GetCPUThreads()
+		stats.CPU_Percent = float64(stats.LoadAverage) / float64(stats.ProcessorCount)
 		stats.Containers = docker.GetContainers()
+		stats.DiskFree, stats.DiskUsage = disk.GetDiskFreeAndUsagePercentage()
+		stats.Hostname = hostname
+		stats.MemPercent = float64(stats.MemTotal-stats.MemAvail) / float64(stats.MemTotal)
+		stats.NumPackages = pkg.GetInstalledPackageCount()
+		stats.Timestamp = startTime
+		stats.UpdatesAvail = pkg.GetNumAvailUpdates()
 		stats.Uptime = proc.GetUptime()
+		stats.Version = GitCommit
+		stats.LANIP, _ = proc.GetIPForInterface(config.LAN())
+		stats.WANIP, _ = proc.GetIPForInterface(config.WAN())
+
 		finishTime := time.Now()
 		diff := finishTime.Sub(startTime)
 		stats.CollectionTime = int64(diff / time.Millisecond)
