@@ -23,12 +23,6 @@ package installed count
 package update avail count
 
 uptime
-crashes this month
-reboots this month
-
-required packages for restart
-
-list of failed units
 
 docker 
 - image
