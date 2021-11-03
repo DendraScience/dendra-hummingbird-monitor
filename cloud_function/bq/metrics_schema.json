@@ -26,7 +26,7 @@
   },
   {
     "name": "disk_free",
-    "type": "FLOAT",
+    "type": "INTEGER",
     "mode": "required"
   },
   {
@@ -50,13 +50,18 @@
     "mode": "REQUIRED"
   },
   {
-    "name": "memory_cached",
+    "name": "memory_buffered",
     "type": "INTEGER",
     "mode": "REQUIRED"
   },
   {
     "name": "memory_free",
     "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "memory_percent",
+    "type": "FLOAT",
     "mode": "REQUIRED"
   },
   {
@@ -67,6 +72,11 @@
   {
     "name": "load_average",
     "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "cpu_percent",
+    "type": "FLOAT",
     "mode": "REQUIRED"
   },
   {
