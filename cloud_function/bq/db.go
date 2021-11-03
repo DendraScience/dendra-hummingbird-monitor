@@ -51,24 +51,24 @@ func Insert(data QuarterHourly) {
 	ctx := context.Background()
 	client, err := bigquery.NewClient(ctx, projectID)
 	if err != nil {
-		log.Fatalf("bigquery.NewClient: %v", err)
+		log.Panicf("bigquery.NewClient: %v", err)
 	}
 	defer client.Close()
 
 	err = queryMetrics(ctx, client, data)
 	if err != nil {
-		log.Fatalf("bigquery insertion fail: %v", err)
+		log.Panicf("bigquery insertion fail: %v", err)
 	}
 
 	err = queryContainers(ctx, client, data)
 	if err != nil {
-		log.Fatalf("bigquery insertion fail: %v", err)
+		log.Panicf("bigquery insertion fail: %v", err)
 	}
 }
 
 func queryMetrics(ctx context.Context, client *bigquery.Client, data QuarterHourly) error {
-	qstring := `INSERT INTO ` + projectID + "." + hostDataSet + "." + hostTableName + `(hostname, version, timestamp, collection_time, disk_usage, disk_free, lan_bytes_down, lan_bytes_up, memory_total, memory_buffered, memory_free, memory_percent, processor_count, load_average, cpu_percent, num_packages, updates_available, wan_bytes_down, wan_bytes_up, uptime, wan_ip, lan_ip) VALUES`
-	qstring += "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
+	qstring := `INSERT INTO ` + projectID + "." + hostDataSet + "." + hostTableName + `(hostname, version, timestamp, collection_time, disk_usage, disk_free, lan_bytes_down, lan_bytes_up, memory_total, memory_buffered, memory_free, memory_percent, memory_avail, processor_count, load_average, cpu_percent, num_packages, updates_available, wan_bytes_down, wan_bytes_up, uptime, wan_ip, lan_ip) VALUES`
+	qstring += "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
 	query := client.Query(qstring)
 	query.Parameters = []bigquery.QueryParameter{
 		{Value: data.Hostname},
@@ -83,6 +83,7 @@ func queryMetrics(ctx context.Context, client *bigquery.Client, data QuarterHour
 		{Value: data.MemBuffered},
 		{Value: data.MemFree},
 		{Value: data.MemPercent},
+		{Value: data.MemAvail},
 		{Value: data.ProcessorCount},
 		{Value: data.LoadAverage},
 		{Value: data.CPU_Percent},

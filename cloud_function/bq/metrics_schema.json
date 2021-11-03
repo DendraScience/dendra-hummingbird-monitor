@@ -71,7 +71,7 @@
   },
   {
     "name": "load_average",
-    "type": "INTEGER",
+    "type": "FLOAT",
     "mode": "REQUIRED"
   },
   {

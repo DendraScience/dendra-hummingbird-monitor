@@ -33,6 +33,7 @@ endif
 clean:  
 	@printf "Cleaning up \e[32mmain\e[39m...\n"
 	rm -f main $(FNAME) || rm -rf main $(FNAME)
+	rm -f *.zip
 
 install: clean main
 	mv $(FNAME) "$$GOPATH/bin/$(PKG)"
