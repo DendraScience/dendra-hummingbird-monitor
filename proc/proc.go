@@ -69,6 +69,20 @@ func GetNetworkUpDown(interface_name string) (newUpBytes int64, newDownBytes int
 		return -1, -1, err
 	}
 }
+func GetFreeMemory() (int64, error) {
+	avail, err := networkFS.Meminfo()
+	if err != nil {
+		return -1, err
+	}
+	return int64(*avail.MemFree), err
+}
+func GetCachedMemory() (int64, error) {
+	avail, err := networkFS.Meminfo()
+	if err != nil {
+		return -1, err
+	}
+	return int64(*avail.MemAvailable) - int64(*avail.MemFree), err
+}
 func GetTotalMemory() (int64, error) {
 	avail, err := networkFS.Meminfo()
 	if err != nil {
@@ -76,7 +90,7 @@ func GetTotalMemory() (int64, error) {
 	}
 	return int64(*avail.MemTotal), err
 }
-func GetFreeMemory() (int64, error) {
+func GetAvailMemory() (int64, error) {
 	avail, err := networkFS.Meminfo()
 	if err != nil {
 		return -1, err

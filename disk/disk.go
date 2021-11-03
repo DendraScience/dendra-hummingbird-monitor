@@ -7,7 +7,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func GetFreeBytes(path string) int64 {
+func getFreeBytes(path string) int64 {
 	var stat unix.Statfs_t
 	unix.Statfs(path, &stat)
 
@@ -34,12 +34,12 @@ func GetPartitions() ([]string, int64) {
 	return partitionList, totalSize
 }
 
-func GetDiskUsagePercentage() float64 {
+func GetDiskFreeAndUsagePercentage() (float64, float64) {
 	var freeSpace float64
 	partitions, size := GetPartitions()
 	for _, part := range partitions {
-		freeSpace += float64(GetFreeBytes(part))
+		freeSpace += float64(getFreeBytes(part))
 	}
 
-	return freeSpace / float64(size)
+	return freeSpace, freeSpace / float64(size)
 }
