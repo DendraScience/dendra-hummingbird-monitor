@@ -64,7 +64,7 @@ func main() {
 		startTime := time.Now()
 		stats.Hostname = hostname
 
-		stats.DiskFree = int64(disk.GetDiskUsagePercentage())
+		stats.DiskFree, stats.DiskUsage = disk.GetDiskFreeAndUsagePercentage()
 		stats.NumPackages = pkg.GetInstalledPackageCount()
 		stats.Timestamp = startTime
 		stats.UpdatesAvail = pkg.GetNumAvailUpdates()

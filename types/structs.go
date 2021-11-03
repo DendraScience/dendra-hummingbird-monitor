@@ -29,15 +29,10 @@ type QuarterHourly struct {
 	Timestamp      time.Time          `json:"timestamp"`         // Timestamp
 	UpdatesAvail   int                `json:"updates_available"` // Package updates avail count
 	Uptime         int64              `json:"uptime"`            // Uptime
-	Version        Version            `json:"version"`           // Hummingbird version
+	Version        string             `json:"version"`           // Hummingbird version
 	WANBytesDown   int64              `json:"wan_bytes_down"`    // Wan Network bytes down
 	WANBytesUp     int64              `json:"wan_bytes_up"`      // Wan Network bytes up
 	WANIP          string             `json:"wan_ip"`            // IP of wan interface
-}
-
-type Version struct {
-	Semantic string `json:"semantic"`
-	Commit   string `json:"commit"`
 }
 
 func (h QuarterHourly) String() string {

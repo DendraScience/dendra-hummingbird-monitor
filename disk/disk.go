@@ -34,12 +34,12 @@ func GetPartitions() ([]string, int64) {
 	return partitionList, totalSize
 }
 
-func GetDiskFreeAndUsagePercentage() (float64, float64) {
-	var freeSpace float64
+func GetDiskFreeAndUsagePercentage() (int64, float64) {
+	var freeSpace int64
 	partitions, size := GetPartitions()
 	for _, part := range partitions {
-		freeSpace += float64(getFreeBytes(part))
+		freeSpace += getFreeBytes(part)
 	}
 
-	return freeSpace, freeSpace / float64(size)
+	return freeSpace, float64(freeSpace) / float64(size)
 }
