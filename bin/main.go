@@ -34,9 +34,8 @@ var (
 	GitCommit string
 	Tag       string
 
-	hostname   string
-	kubeConfig *string
-	version    = flag.Bool("version", false, "Get detailed version string")
+	hostname string
+	version  = flag.Bool("version", false, "Get detailed version string")
 )
 
 func init() {

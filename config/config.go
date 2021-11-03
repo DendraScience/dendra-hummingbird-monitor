@@ -7,10 +7,7 @@ import (
 
 var config Config
 
-var defaultConfig = Config{
-	// default to location for k3s kubeconfig
-	KubeConfig: "/etc/rancher/k3s/k3s.yaml",
-}
+var defaultConfig = Config{}
 
 func init() {
 	var err error
@@ -42,8 +39,4 @@ func Endpoint() string {
 }
 func AuthKey() string {
 	return config.AuthKey
-}
-
-func KubeConfig() string {
-	return config.KubeConfig
 }
