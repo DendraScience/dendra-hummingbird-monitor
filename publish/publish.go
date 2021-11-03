@@ -22,7 +22,7 @@ func init() {
 }
 
 func Post(jsonStr string, URL string, auth string, hostname string) {
-	n := rand.Intn(10 * 60)
+	n := rand.Intn(10)
 	time.Sleep(time.Duration(n) * time.Second)
 	for retries := 0; retries <= 5; retries++ {
 		var jsonBuf = []byte(jsonStr)

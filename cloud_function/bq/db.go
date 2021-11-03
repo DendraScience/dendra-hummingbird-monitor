@@ -56,15 +56,18 @@ func Insert(data QuarterHourly) {
 	defer client.Close()
 
 	err = queryMetrics(ctx, client, data)
-	err = queryContainers(ctx, client, data)
-
 	if err != nil {
-		log.Printf("bigquery insertion fail: %v", err)
+		log.Fatalf("bigquery insertion fail: %v", err)
+	}
+
+	err = queryContainers(ctx, client, data)
+	if err != nil {
+		log.Fatalf("bigquery insertion fail: %v", err)
 	}
 }
 
 func queryMetrics(ctx context.Context, client *bigquery.Client, data QuarterHourly) error {
-	qstring := `INSERT INTO ` + projectID + "," + hostDataSet + "." + hostTableName + `(hostname, version, timestamp, collection_time, disk_usage, disk_free, lan_bytes_down, lan_bytes_up, memory_total, memory_buffered, memory_free, memory_percent, processor_count, load_average, cpu_percent, num_packages, updates_available, wan_bytes_down, wan_bytes_up, uptime, wan_ip, lan_ip) VALUES`
+	qstring := `INSERT INTO ` + projectID + "." + hostDataSet + "." + hostTableName + `(hostname, version, timestamp, collection_time, disk_usage, disk_free, lan_bytes_down, lan_bytes_up, memory_total, memory_buffered, memory_free, memory_percent, processor_count, load_average, cpu_percent, num_packages, updates_available, wan_bytes_down, wan_bytes_up, uptime, wan_ip, lan_ip) VALUES`
 	qstring += "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
 	query := client.Query(qstring)
 	query.Parameters = []bigquery.QueryParameter{
@@ -93,8 +96,14 @@ func queryMetrics(ctx context.Context, client *bigquery.Client, data QuarterHour
 	}
 
 	job, err := query.Run(ctx)
+	if err != nil {
+		log.Printf("Error creating metrics query job: %s", err.Error())
+		log.Printf("Query: %s", qstring)
+		return err
+	}
 	status, err := job.Wait(ctx)
 	if err != nil {
+		log.Printf("Error running metrics query: %s", err.Error())
 		return err
 	}
 	err = status.Err()
@@ -102,7 +111,7 @@ func queryMetrics(ctx context.Context, client *bigquery.Client, data QuarterHour
 }
 func queryContainers(ctx context.Context, client *bigquery.Client, data QuarterHourly) error {
 	for _, container := range data.Containers {
-		qstring := `INSERT INTO ` + projectID + "," + containerDataSet + "." + containerTableName + `(hostname, version, id, timestamp, image, name, created, cpu_percent, memory_usage, memory_allowed, memory_percent, uptime) VALUES`
+		qstring := `INSERT INTO ` + projectID + "." + containerDataSet + "." + containerTableName + `(hostname, version, id, timestamp, image, name, created, cpu_percent, memory_usage, memory_allowed, memory_percent, uptime) VALUES`
 		qstring += "(?,?,?,?,?,?,?,?,?,?,?,?);"
 		query := client.Query(qstring)
 		query.Parameters = []bigquery.QueryParameter{
@@ -121,13 +130,17 @@ func queryContainers(ctx context.Context, client *bigquery.Client, data QuarterH
 		}
 		job, err := query.Run(ctx)
 		if err != nil {
-			log.Printf("Error creating query job: %s" + err.Error())
+			log.Printf("Error creating container query job: %s", err.Error())
+			log.Printf("Query: %s", qstring)
 			return err
 		}
-		_, err = job.Wait(ctx)
+		stat, err := job.Wait(ctx)
 		if err != nil {
-			log.Printf("Error running query: %s" + err.Error())
+			log.Printf("Error running container query: %s", err.Error())
 			return err
+		}
+		if stat.Err() != nil {
+			return stat.Err()
 		}
 	}
 	return nil
