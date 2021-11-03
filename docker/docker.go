@@ -17,12 +17,17 @@ var (
 )
 
 func init() {
-	mobyClient, _ = client.NewClientWithOpts()
+	// 	version string
+	//	80     // custom http headers configured by users.
+	//	81     customHTTPHeaders map[string]string
+	//	82     // manualOverride is set to true when the version was set by users.
+	//	83     manualOverride bool
+	mobyClient, _ = client.NewClientWithOpts(client.WithVersion("1.40"))
 }
 
 func GetContainers() []Container {
 	var containers []Container
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
 
 	containerSet, err := mobyClient.ContainerList(ctx, types.ContainerListOptions{All: false, Limit: -1})

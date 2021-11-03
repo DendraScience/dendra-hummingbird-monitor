@@ -31,7 +31,7 @@ func Post(jsonStr string, URL string, auth string, hostname string) {
 		req.Header.Set("Content-Type", "application/json")
 
 		client := &http.Client{}
-		client.Timeout = time.Second * 15
+		client.Timeout = time.Second * 30
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Errorf("Error posting data: %v", err)
