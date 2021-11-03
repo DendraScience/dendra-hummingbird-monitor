@@ -33,7 +33,6 @@ func GetContainers() []Container {
 	for _, c := range containerSet {
 		var container Container
 		var v *types.StatsJSON
-		var mem, memLimit float64
 
 		stats, err := mobyClient.ContainerStatsOneShot(ctx, c.ID)
 		if err != nil {
@@ -53,13 +52,13 @@ func GetContainers() []Container {
 			container.Name = c.Names[0]
 		}
 		container.Image = c.Image
-		container.Created = time.Unix(c.Created/1e3, (c.Created%1e3)*1e6)
+		container.Created = time.Unix(c.Created, 0)
 		container.CPU = calculateCPUPercentUnix(previousCPU, previousSystem, v)
 		container.MemUsage = int(calculateMemUsageUnixNoCache(v.MemoryStats))
 		container.MemAllowed = int(v.MemoryStats.Limit)
-		container.MemPercent = calculateMemPercentUnixNoCache(memLimit, mem)
+		container.MemPercent = calculateMemPercentUnixNoCache(float64(v.MemoryStats.Limit), calculateMemUsageUnixNoCache(v.MemoryStats))
 		// netRx, netTx := calculateNetwork(v.Networks)
-		container.Uptime = time.Since(time.Unix(c.Created/1e3, (c.Created%1e3)*1e6)).Milliseconds()
+		container.Uptime = int64(time.Since(container.Created).Seconds())
 		containers = append(containers, container)
 	}
 
