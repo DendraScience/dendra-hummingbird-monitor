@@ -58,7 +58,7 @@ func GetContainers() []Container {
 		}
 		container.Image = c.Image
 		container.Created = time.Unix(c.Created, 0)
-		container.CPU = calculateCPUPercentUnix(previousCPU, previousSystem, v)
+		container.CPU = calculateCPUPercentUnix(previousCPU, previousSystem, v) / 100
 		container.MemUsage = int(calculateMemUsageUnixNoCache(v.MemoryStats))
 		container.MemAllowed = int(v.MemoryStats.Limit)
 		container.MemPercent = calculateMemPercentUnixNoCache(float64(v.MemoryStats.Limit), calculateMemUsageUnixNoCache(v.MemoryStats))
