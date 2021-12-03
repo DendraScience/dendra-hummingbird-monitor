@@ -8,7 +8,7 @@ replace k8s.io/api => k8s.io/api v0.19.2
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.23.1
 
-replace github.com/jaypipes/ghw => github.com/taigrr/ghw v0.8.1
+replace github.com/jaypipes/ghw => github.com/taigrr/ghw v0.8.0-1
 
 require (
 	cloud.google.com/go/bigquery v1.0.1
