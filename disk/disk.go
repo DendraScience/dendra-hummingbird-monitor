@@ -51,7 +51,7 @@ func GetMountInfo() []types.MountInfo {
 				curMount.DiskFree = float64(getFreeBytes(part.MountPoint))
 				curMount.DiskUsage = curMount.DiskAvail - float64(curMount.DiskFree)
 				curMount.DiskPercent = float64(curMount.DiskUsage / curMount.DiskAvail)
-				curMount.DiskName = part.Disk.Name
+				curMount.DiskName = part.Name
 				curMount.PartitionUUID = part.UUID
 				mountInfo = append(mountInfo, curMount)
 			}
