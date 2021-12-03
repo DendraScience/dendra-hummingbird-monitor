@@ -61,7 +61,7 @@ func GetContainers() []Container {
 		container.CPU = calculateCPUPercentUnix(previousCPU, previousSystem, v) / 100
 		container.MemUsage = int(calculateMemUsageUnixNoCache(v.MemoryStats))
 		container.MemAllowed = int(v.MemoryStats.Limit)
-		container.MemPercent = calculateMemPercentUnixNoCache(float64(v.MemoryStats.Limit), calculateMemUsageUnixNoCache(v.MemoryStats))
+		container.MemPercent = calculateMemPercentUnixNoCache(float64(v.MemoryStats.Limit), calculateMemUsageUnixNoCache(v.MemoryStats)) / 100
 		// netRx, netTx := calculateNetwork(v.Networks)
 		container.Uptime = int64(time.Since(container.Created).Seconds())
 		containers = append(containers, container)
