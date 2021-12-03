@@ -8,12 +8,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type MountInfo struct {
+	DiskAvail     float64 `json:"disk_avail"`    // Disk usage
+	DiskFree      int64   `json:"disk_free"`     // Disk free
+	DiskName      string  `json:"disk_name"`     // name like '/dev/sda1'
+	DiskUsage     float64 `json:"disk_usage"`    // Disk usage
+	DiskPercent   int     `json:"usage_percent"` // Disk usage
+	MountPoint    string  `json:"mount_point"`   // folder the disk is mounted to
+	PartitionUUID string  `json:"partition_uuid"`
+}
 type QuarterHourly struct {
 	CPU_Percent    float64            `json:"cpu_percent"`       // CPU Percentage usage
 	CollectionTime int64              `json:"collection_time"`   // Time it takes for metrics collection
 	Containers     []docker.Container `json:"containers"`        // Containers and statuses
 	DiskFree       int64              `json:"disk_free"`         // Disk free
 	DiskUsage      float64            `json:"disk_usage"`        // Disk usage
+	MountInfo      []MountInfo        `json:"mounts"`            // mounted disks information
 	Hostname       string             `json:"hostname"`          // Hostname
 	LANBytesDown   int64              `json:"lan_bytes_down"`    // Lan Network bytes down
 	LANBytesUp     int64              `json:"lan_bytes_up"`      // Lan Network bytes up

@@ -17,10 +17,14 @@ var (
 	hostTableName      string
 	containerDataSet   string
 	containerTableName string
+	diskDataSet        string
+	diskTableName      string
 )
 
 func init() {
 	projectID = os.Getenv("GOOGLE_CLOUD_PROJECT")
+	diskDataSet = os.Getenv("BIGQUERY_DATASET_DISKS")
+	diskTableName = os.Getenv("BIGQUERY_TABLE_DISKS")
 	containerDataSet = os.Getenv("BIGQUERY_DATASET_CONTAINERS")
 	containerTableName = os.Getenv("BIGQUERY_TABLE_CONTAINERS")
 	hostDataSet = os.Getenv("BIGQUERY_DATASET_HOST")
@@ -45,6 +49,14 @@ func init() {
 		fmt.Println("BIGQUERY_TABLE_CONTAINER environment variable must be set.")
 		os.Exit(1)
 	}
+	if diskDataSet == "" {
+		fmt.Println("BIGQUERY_DATASET_DISK environment variable must be set.")
+		os.Exit(1)
+	}
+	if diskTableName == "" {
+		fmt.Println("BIGQUERY_TABLE_DISK environment variable must be set.")
+		os.Exit(1)
+	}
 }
 
 func Insert(data QuarterHourly) {
@@ -54,6 +66,11 @@ func Insert(data QuarterHourly) {
 		log.Panicf("bigquery.NewClient: %v", err)
 	}
 	defer client.Close()
+
+	err = queryDisks(ctx, client, data)
+	if err != nil {
+		log.Panicf("bigquery insertion fail: %v", err)
+	}
 
 	err = queryMetrics(ctx, client, data)
 	if err != nil {
@@ -110,6 +127,47 @@ func queryMetrics(ctx context.Context, client *bigquery.Client, data QuarterHour
 	err = status.Err()
 	return err
 }
+func queryDisks(ctx context.Context, client *bigquery.Client, data QuarterHourly) error {
+	qstring := `INSERT INTO ` + projectID + "." + diskDataSet + "." + diskTableName + `(hostname, version, partition_uuid, timestamp, disk_free, disk_used, disk_avail, disk_name, mountpoint, disk_percent) VALUES`
+	qps := []bigquery.QueryParameter{}
+	for i, mount := range data.MountInfo {
+		if i == len(data.MountInfo)-1 {
+			qstring += "(?,?,?,?,?,?,?,?,?,?,?,?);"
+		} else {
+			qstring += "(?,?,?,?,?,?,?,?,?,?,?,?),"
+		}
+		qps = append(qps,
+			[]bigquery.QueryParameter{{Value: data.Hostname},
+				{Value: data.Version},
+				{Value: mount.PartitionUUID},
+				{Value: data.Timestamp},
+				{Value: mount.DiskFree},
+				{Value: mount.DiskUsage},
+				{Value: mount.DiskAvail},
+				{Value: mount.DiskName},
+				{Value: mount.MountPoint},
+				{Value: mount.DiskPercent}}...)
+	}
+	query := client.Query(qstring)
+	query.Parameters = qps
+	job, err := query.Run(ctx)
+	if err != nil {
+		log.Printf("Error creating container query job: %s", err.Error())
+		log.Printf("Query: %s", qstring)
+		return err
+	}
+	stat, err := job.Wait(ctx)
+	if err != nil {
+		log.Printf("Error running container query: %s", err.Error())
+		return err
+	}
+	if stat.Err() != nil {
+		return stat.Err()
+	}
+
+	return nil
+}
+
 func queryContainers(ctx context.Context, client *bigquery.Client, data QuarterHourly) error {
 	qstring := `INSERT INTO ` + projectID + "." + containerDataSet + "." + containerTableName + `(hostname, version, id, timestamp, image, name, created, cpu_percent, memory_usage, memory_allowed, memory_percent, uptime) VALUES`
 	qps := []bigquery.QueryParameter{}
