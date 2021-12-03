@@ -132,9 +132,9 @@ func queryDisks(ctx context.Context, client *bigquery.Client, data QuarterHourly
 	qps := []bigquery.QueryParameter{}
 	for i, mount := range data.MountInfo {
 		if i == len(data.MountInfo)-1 {
-			qstring += "(?,?,?,?,?,?,?,?,?,?,?,?);"
+			qstring += "(?,?,?,?,?,?,?,?,?,?);"
 		} else {
-			qstring += "(?,?,?,?,?,?,?,?,?,?,?,?),"
+			qstring += "(?,?,?,?,?,?,?,?,?,?),"
 		}
 		qps = append(qps,
 			[]bigquery.QueryParameter{{Value: data.Hostname},
