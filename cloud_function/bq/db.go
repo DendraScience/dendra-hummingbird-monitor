@@ -50,11 +50,11 @@ func init() {
 		os.Exit(1)
 	}
 	if diskDataSet == "" {
-		fmt.Println("BIGQUERY_DATASET_DISK environment variable must be set.")
+		fmt.Println("BIGQUERY_DATASET_DISKS environment variable must be set.")
 		os.Exit(1)
 	}
 	if diskTableName == "" {
-		fmt.Println("BIGQUERY_TABLE_DISK environment variable must be set.")
+		fmt.Println("BIGQUERY_TABLE_DISKS environment variable must be set.")
 		os.Exit(1)
 	}
 }
