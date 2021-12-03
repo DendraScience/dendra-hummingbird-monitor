@@ -104,7 +104,7 @@ func main() {
 		stats.Version = GitCommit
 		stats.LANIP, _ = proc.GetIPForInterface(config.LAN())
 		stats.WANIP, _ = proc.GetIPForInterface(config.WAN())
-
+		stats.MountInfo = disk.GetMountInfo()
 		finishTime := time.Now()
 		diff := finishTime.Sub(startTime)
 		stats.CollectionTime = int64(diff / time.Millisecond)

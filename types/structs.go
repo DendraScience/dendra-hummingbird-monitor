@@ -10,10 +10,10 @@ import (
 
 type MountInfo struct {
 	DiskAvail     float64 `json:"disk_avail"`    // Disk usage
-	DiskFree      int64   `json:"disk_free"`     // Disk free
+	DiskFree      float64 `json:"disk_free"`     // Disk free
 	DiskName      string  `json:"disk_name"`     // name like '/dev/sda1'
 	DiskUsage     float64 `json:"disk_usage"`    // Disk usage
-	DiskPercent   int     `json:"usage_percent"` // Disk usage
+	DiskPercent   float64 `json:"usage_percent"` // Disk usage
 	MountPoint    string  `json:"mount_point"`   // folder the disk is mounted to
 	PartitionUUID string  `json:"partition_uuid"`
 }

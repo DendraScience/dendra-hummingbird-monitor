@@ -3,6 +3,7 @@ package disk
 import (
 	"log"
 
+	"github.com/DendraScience/dendra_hummingbird_monitor/types"
 	"github.com/jaypipes/ghw"
 	"golang.org/x/sys/unix"
 )
@@ -34,6 +35,31 @@ func GetPartitions() ([]string, int64) {
 	return partitionList, totalSize
 }
 
+func GetMountInfo() []types.MountInfo {
+	mountInfo := []types.MountInfo{}
+	block, err := ghw.Block()
+	if err != nil {
+		log.Printf("Error analyzing block devices: %s\n", err.Error())
+		return mountInfo
+	}
+	for _, disk := range block.Disks {
+		for _, part := range disk.Partitions {
+			if part.MountPoint != "" {
+				curMount := types.MountInfo{}
+				curMount.MountPoint = part.MountPoint
+				curMount.DiskAvail = float64(part.SizeBytes)
+				curMount.DiskFree = float64(getFreeBytes(part.MountPoint))
+				curMount.DiskUsage = curMount.DiskAvail - float64(curMount.DiskFree)
+				curMount.DiskPercent = float64(curMount.DiskUsage / curMount.DiskAvail)
+				curMount.DiskName = part.Disk.Name
+				curMount.PartitionUUID = part.UUID
+				mountInfo = append(mountInfo, curMount)
+			}
+		}
+	}
+	return mountInfo
+}
+
 func GetDiskFreeAndUsagePercentage() (int64, float64) {
 	var freeSpace int64
 	partitions, size := GetPartitions()
@@ -41,5 +67,5 @@ func GetDiskFreeAndUsagePercentage() (int64, float64) {
 		freeSpace += getFreeBytes(part)
 	}
 
-	return freeSpace, float64(freeSpace) / float64(size)
+	return freeSpace, float64(size-freeSpace) / float64(size)
 }

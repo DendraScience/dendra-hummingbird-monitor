@@ -21,17 +21,17 @@
   },
   {
     "name": "disk_free",
-    "type": "INTEGER",
+    "type": "FLOAT",
     "mode": "REQUIRED"
   },
   {
     "name": "disk_used",
-    "type": "INTEGER",
+    "type": "FLOAT",
     "mode": "required"
   },
   {
     "name": "disk_avail",
-    "type": "STRING",
+    "type": "FLOAT",
     "mode": "required"
   },
   {
