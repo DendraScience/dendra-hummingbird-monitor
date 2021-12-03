@@ -1,0 +1,52 @@
+[
+  {
+    "name": "hostname",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "version",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+	"name":"partition_uuid",
+	"type":"STRING",
+	"mode":"REQUIRED"
+  },
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "disk_free",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "disk_used",
+    "type": "INTEGER",
+    "mode": "required"
+  },
+  {
+    "name": "disk_avail",
+    "type": "STRING",
+    "mode": "required"
+  },
+  {
+    "name": "disk_name",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "mountpoint",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "disk_percent",
+    "type": "FLOAT",
+    "mode": "REQUIRED"
+  }
+]
