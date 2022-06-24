@@ -2,13 +2,11 @@ package k8s
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"log"
 
-	"github.com/docker/docker/api/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -21,9 +19,18 @@ var (
 )
 
 func init() {
-	config, _ := clientcmd.BuildConfigFromFlags("", "/root/.kube/config")
-	k8sClient, _ = kubernetes.NewForConfig(config)
-	metricsClient, _ = metrics.NewForConfig(config)
+	config, err := clientcmd.BuildConfigFromFlags("", "/home/ssmith/.kube/config")
+	if err != nil {
+		panic(err)
+	}
+	k8sClient, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+	metricsClient, err = metrics.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func GetClusterContainers() []Container {
@@ -34,8 +41,8 @@ func GetClusterContainers() []Container {
 
 	podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		fmt.Println("Error:", err)
-		return containers
+		fmt.Println("Error collecting metrics:", err)
+		//	return containers
 	}
 	for _, podMetric := range podMetrics.Items {
 		podContainers := podMetric.Containers
@@ -48,45 +55,35 @@ func GetClusterContainers() []Container {
 			c.Name = container.Name
 			cmap[container.Name] = c
 		}
-
 	}
-
-	containerSet, err := mobyClient.ContainerList(ctx, types.ContainerListOptions{All: false, Limit: -1})
+	fmt.Printf("Cmap: %v\n", cmap)
+	pods, err := k8sClient.CoreV1().Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		log.Printf("Error fetching the container list: %s", err.Error())
+		log.Printf("Error collecting pods: %v\n", err)
 		return containers
 	}
-	for _, c := range containerSet {
-		var container Container
-		var v *types.StatsJSON
-
-		stats, err := mobyClient.ContainerStatsOneShot(ctx, c.ID)
-		if err != nil {
-			log.Printf("Error fetching the container stats: %s", err.Error())
-			continue
+	for _, pod := range pods.Items {
+		for i, container := range pod.Status.ContainerStatuses {
+			containerName := container.Name
+			var ok bool
+			var c Container
+			if c, ok = cmap[containerName]; !ok {
+				continue
+			}
+			running := container.State.Running
+			if running == nil {
+				continue
+			}
+			c.Image = container.Image
+			c.Created = running.StartedAt.Time
+			c.Uptime = int64(time.Now().Sub(c.Created).Seconds())
+			x, _ := pod.Spec.Containers[i].Resources.Limits.Memory().AsInt64()
+			c.MemAllowed = int(x)
+			c.MemPercent = float64(c.MemUsage) / float64(c.MemAllowed)
+			x, _ = pod.Spec.Containers[i].Resources.Limits.Cpu().AsInt64()
+			c.CPU = c.CPU / float64(x)
+			containers = append(containers, c)
 		}
-
-		dec := json.NewDecoder(stats.Body)
-		if err := dec.Decode(&v); err != nil {
-			log.Printf("Error decoding the container stats: %s", err.Error())
-		}
-		previousCPU := v.PreCPUStats.CPUUsage.TotalUsage
-		previousSystem := v.PreCPUStats.SystemUsage
-
-		container.ID = c.ID
-		if len(c.Names) > 0 {
-			container.Name = c.Names[0]
-		}
-		container.Image = c.Image
-		container.Created = time.Unix(c.Created, 0)
-		container.CPU = calculateCPUPercentUnix(previousCPU, previousSystem, v) / 100
-		container.MemUsage = int(calculateMemUsageUnixNoCache(v.MemoryStats))
-		container.MemAllowed = int(v.MemoryStats.Limit)
-		container.MemPercent = calculateMemPercentUnixNoCache(float64(v.MemoryStats.Limit), calculateMemUsageUnixNoCache(v.MemoryStats)) / 100
-		// netRx, netTx := calculateNetwork(v.Networks)
-		container.Uptime = int64(time.Since(container.Created).Seconds())
-		containers = append(containers, container)
 	}
-
 	return containers
 }

@@ -34,8 +34,9 @@ var (
 	GitCommit string
 	Tag       string
 
-	hostname string
-	version  = flag.Bool("version", false, "Get detailed version string")
+	hostname              string
+	version               = flag.Bool("version", false, "Get detailed version string")
+	isPrimaryControlPlane = flag.Bool("isPrimary", false, "Serve as primary control plane")
 )
 
 func init() {
@@ -93,7 +94,9 @@ func main() {
 		}
 		stats.ProcessorCount = cpu.GetCPUThreads()
 		stats.CPU_Percent = float64(stats.LoadAverage) / float64(stats.ProcessorCount)
-		stats.Containers = k8s.GetContainers()
+		if *isPrimaryControlPlane {
+			stats.Containers = k8s.GetClusterContainers()
+		}
 		stats.DiskFree, stats.DiskUsage = disk.GetDiskFreeAndUsagePercentage()
 		stats.Hostname = hostname
 		stats.MemPercent = float64(stats.MemTotal-stats.MemAvail) / float64(stats.MemTotal)
