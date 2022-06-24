@@ -11,7 +11,7 @@ import (
 	"github.com/DendraScience/dendra_hummingbird_monitor/config"
 	"github.com/DendraScience/dendra_hummingbird_monitor/cpu"
 	"github.com/DendraScience/dendra_hummingbird_monitor/disk"
-	"github.com/DendraScience/dendra_hummingbird_monitor/docker"
+	"github.com/DendraScience/dendra_hummingbird_monitor/k8s"
 	"github.com/DendraScience/dendra_hummingbird_monitor/pkg"
 	"github.com/DendraScience/dendra_hummingbird_monitor/proc"
 	"github.com/DendraScience/dendra_hummingbird_monitor/publish"
@@ -93,7 +93,7 @@ func main() {
 		}
 		stats.ProcessorCount = cpu.GetCPUThreads()
 		stats.CPU_Percent = float64(stats.LoadAverage) / float64(stats.ProcessorCount)
-		stats.Containers = docker.GetContainers()
+		stats.Containers = k8s.GetContainers()
 		stats.DiskFree, stats.DiskUsage = disk.GetDiskFreeAndUsagePercentage()
 		stats.Hostname = hostname
 		stats.MemPercent = float64(stats.MemTotal-stats.MemAvail) / float64(stats.MemTotal)

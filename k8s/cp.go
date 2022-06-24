@@ -1,34 +1,55 @@
-package docker
+package k8s
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"log"
 
 	"github.com/docker/docker/api/types"
-	"github.com/moby/moby/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	metrics "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
 var (
-	configSet  bool = false
-	mobyClient *client.Client
+	metricsClient *metrics.Clientset
+	k8sClient     *kubernetes.Clientset
 )
 
 func init() {
-	// 	version string
-	//	80     // custom http headers configured by users.
-	//	81     customHTTPHeaders map[string]string
-	//	82     // manualOverride is set to true when the version was set by users.
-	//	83     manualOverride bool
-	mobyClient, _ = client.NewClientWithOpts(client.WithVersion("1.40"))
+	config, _ := clientcmd.BuildConfigFromFlags("", "/root/.kube/config")
+	k8sClient, _ = kubernetes.NewForConfig(config)
+	metricsClient, _ = metrics.NewForConfig(config)
 }
 
-func GetContainers() []Container {
+func GetClusterContainers() []Container {
 	var containers []Container
+	cmap := make(map[string]Container)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
+
+	podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		fmt.Println("Error:", err)
+		return containers
+	}
+	for _, podMetric := range podMetrics.Items {
+		podContainers := podMetric.Containers
+		for _, container := range podContainers {
+			c := Container{}
+			i, _ := container.Usage.Cpu().AsInt64()
+			c.CPU = float64(i)
+			i, _ = container.Usage.Memory().AsInt64()
+			c.MemUsage = int(i)
+			c.Name = container.Name
+			cmap[container.Name] = c
+		}
+
+	}
 
 	containerSet, err := mobyClient.ContainerList(ctx, types.ContainerListOptions{All: false, Limit: -1})
 	if err != nil {

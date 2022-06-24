@@ -1,4 +1,4 @@
-package docker
+package k8s
 
 import "time"
 

@@ -2,7 +2,7 @@
 // docker/cli is licensed under the Apache 2.0 License, which doesn't require attribution
 // or source distribution when code is incorporated into a larger work but it feels weird
 // to include this code without attribution, hence this comment.
-package docker
+package k8s
 
 import "github.com/docker/docker/api/types"
 
