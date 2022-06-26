@@ -51,7 +51,7 @@ func getContainerMap(ctx context.Context) (containers map[string]Container, err 
 				continue
 			}
 			c.ID = strings.ReplaceAll(container.ContainerID, "containerd://", "")
-			c.Name = pod.Name + "_" + pod.Namespace + "_" + container.Name
+			c.Name = pod.Name + "_" + container.Name + "_" + pod.Namespace
 			c.Image = container.Image
 			c.Created = running.StartedAt.Time
 			c.Uptime = int64(time.Now().Sub(c.Created).Seconds())
