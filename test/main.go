@@ -9,6 +9,7 @@ import (
 	"log"
 
 	. "github.com/DendraScience/dendra_hummingbird_monitor/k8s"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -30,21 +31,21 @@ func init() {
 }
 
 func main() {
-	x := GetClusterContainers2()
-	fmt.Printf("%v\n", x)
-	fmt.Printf("Number of containers: %d\n", len(x))
+	x, _ := getContainers(context.TODO())
+	for _, c := range x {
+		fmt.Printf("%s\n", c.String())
+	}
+	//	fmt.Printf("%v\n", x)
+	//	fmt.Printf("Number of containers: %d\n", len(x))
 }
 
-func GetClusterContainers2() []Container {
-	var containers []Container
+func getContainers(ctx context.Context) (containers []Container, err error) {
 	cmap := make(map[string]Container)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
-	defer cancel()
-
-	pods, err := k8sClient.CoreV1().Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	var pods *v1.PodList
+	pods, err = k8sClient.CoreV1().Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		log.Printf("Error collecting pods: %v\n", err)
-		return containers
+		return
 	}
 	for _, pod := range pods.Items {
 		for i, container := range pod.Status.ContainerStatuses {
@@ -54,6 +55,8 @@ func GetClusterContainers2() []Container {
 			if running == nil {
 				continue
 			}
+			c.ID = container.ContainerID
+			c.Name = container.Name
 			c.Image = container.Image
 			c.Created = running.StartedAt.Time
 			c.Uptime = int64(time.Now().Sub(c.Created).Seconds())
@@ -64,41 +67,48 @@ func GetClusterContainers2() []Container {
 			cmap[containerName] = c
 		}
 	}
-	fmt.Printf("Cmap: %v\n", cmap)
-	fmt.Printf("Number of containers: %d\n", len(cmap))
+	for _, v := range cmap {
+		containers = append(containers, v)
+	}
+	return
+}
+
+func GetClusterContainers2() []Container {
+	var containers []Container
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
+	defer cancel()
 
 	d, err := k8sClient.RESTClient().Get().AbsPath("/api/v1/nodes/den-shasta-k8s-cp-01/proxy/metrics/cadvisor").DoRaw(ctx)
-
 	if err != nil {
 		fmt.Printf("Error sending rest: %v\n", err)
 	}
 	fmt.Printf("Data received: %s\n", string(d))
 	return containers
-	podMetrics, err := DmetricsClient.MetricsV1beta1().PodMetricses(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		fmt.Println("Error collecting metrics:", err)
-		return containers
-	}
-	for _, podMetric := range podMetrics.Items {
-
-		//var ok bool
-		//	if c, ok = cmap[containerName]; !ok {
-		//			continue
-		//		}
-		podContainers := podMetric.Containers
-		for _, container := range podContainers {
-			c := Container{}
-			i, _ := container.Usage.Cpu().AsInt64()
-			c.CPU = float64(i) / c.CPU
-			i, _ = container.Usage.Memory().AsInt64()
-			c.MemUsage = int(i)
-			c.Name = container.Name
-			c.MemPercent = float64(c.MemUsage) / float64(c.MemAllowed)
-			containers = append(containers, c)
-		}
-	}
-
-	return containers
+	//	podMetrics, err := DmetricsClient.MetricsV1beta1().PodMetricses(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	//	if err != nil {
+	//		fmt.Println("Error collecting metrics:", err)
+	//		return containers
+	//	}
+	//	for _, podMetric := range podMetrics.Items {
+	//
+	//		//var ok bool
+	//		//	if c, ok = cmap[containerName]; !ok {
+	//		//			continue
+	//		//		}
+	//		podContainers := podMetric.Containers
+	//		for _, container := range podContainers {
+	//			c := Container{}
+	//			i, _ := container.Usage.Cpu().AsInt64()
+	//			c.CPU = float64(i) / c.CPU
+	//			i, _ = container.Usage.Memory().AsInt64()
+	//			c.MemUsage = int(i)
+	//			c.Name = container.Name
+	//			c.MemPercent = float64(c.MemUsage) / float64(c.MemAllowed)
+	//			containers = append(containers, c)
+	//		}
+	//	}
+	//
+	//	return containers
 }
 
 type NodeID string

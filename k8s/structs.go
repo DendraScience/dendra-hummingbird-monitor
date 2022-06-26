@@ -1,6 +1,9 @@
 package k8s
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Container struct {
 	ID         string    `json:"id"`
@@ -12,4 +15,8 @@ type Container struct {
 	Created    time.Time `json:"time_created"`
 	Image      string    `json:"image"`
 	Uptime     int64     `json:"uptime"`
+}
+
+func (c Container) String() string {
+	return fmt.Sprintf("Name: %s\nImage: %s\nID:%s\n", c.Name, c.Image, c.ID)
 }
