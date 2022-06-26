@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+type Metric struct {
+	ID        string
+	Value     int64
+	TimeStamp time.Time
+}
+
 type Container struct {
 	ID              string    `json:"id"`
 	Name            string    `json:"name"`
@@ -23,5 +29,5 @@ type Container struct {
 }
 
 func (c Container) String() string {
-	return fmt.Sprintf("Name: %s\nImage: %s\nID: %s\n", c.Name, c.Image, c.ID)
+	return fmt.Sprintf("\nName: %s\tImage: %s\nID: %s\nCreated: %v\nMemPercent: %.2f\tMemAllowed: %d\tMemUsage: %d\nCPUUsage: %.2f\tCPUAllowed: %.2f\tCPUMS: %d", c.Name, c.Image, c.ID, c.Created, c.MemPercent, c.MemAllowed, c.MemUsage, c.CPUUsage, c.CPUAllowed, c.NewCPUMS)
 }

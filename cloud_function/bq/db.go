@@ -152,13 +152,13 @@ func queryDisks(ctx context.Context, client *bigquery.Client, data QuarterHourly
 	query.Parameters = qps
 	job, err := query.Run(ctx)
 	if err != nil {
-		log.Printf("Error creating container query job: %s", err.Error())
+		log.Printf("Error creating disk query job: %s", err.Error())
 		log.Printf("Query: %s", qstring)
 		return err
 	}
 	stat, err := job.Wait(ctx)
 	if err != nil {
-		log.Printf("Error running container query: %s", err.Error())
+		log.Printf("Error running disk query: %s", err.Error())
 		return err
 	}
 	if stat.Err() != nil {
@@ -169,6 +169,10 @@ func queryDisks(ctx context.Context, client *bigquery.Client, data QuarterHourly
 }
 
 func queryContainers(ctx context.Context, client *bigquery.Client, data QuarterHourly) error {
+	if len(data.Containers) == 0 {
+		log.Printf("Skipping empty container query!")
+		return nil
+	}
 	qstring := `INSERT INTO ` + projectID + "." + containerDataSet + "." + containerTableName + `(hostname, version, id, timestamp, image, name, created, cpu_percent, memory_usage, memory_allowed, memory_percent, uptime) VALUES`
 	qps := []bigquery.QueryParameter{}
 	for i, container := range data.Containers {
