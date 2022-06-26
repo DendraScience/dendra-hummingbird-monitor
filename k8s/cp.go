@@ -49,7 +49,7 @@ func GetClusterContainers() []Container {
 		for _, container := range podContainers {
 			c := Container{}
 			i, _ := container.Usage.Cpu().AsInt64()
-			c.CPU = float64(i)
+			c.CPUUsage = float64(i)
 			i, _ = container.Usage.Memory().AsInt64()
 			c.MemUsage = int(i)
 			c.Name = container.Name
@@ -81,7 +81,7 @@ func GetClusterContainers() []Container {
 			c.MemAllowed = int(x)
 			c.MemPercent = float64(c.MemUsage) / float64(c.MemAllowed)
 			x, _ = pod.Spec.Containers[i].Resources.Limits.Cpu().AsInt64()
-			c.CPU = c.CPU / float64(x)
+			c.CPUUsage = c.CPUUsage / float64(x)
 			containers = append(containers, c)
 		}
 	}

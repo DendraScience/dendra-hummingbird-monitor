@@ -69,7 +69,7 @@ func getContainers(ctx context.Context) (containers map[string]Container, err er
 			x, _ := pod.Spec.Containers[i].Resources.Limits.Memory().AsInt64()
 			c.MemAllowed = int(x)
 			x, _ = pod.Spec.Containers[i].Resources.Limits.Cpu().AsInt64()
-			c.CPU = float64(x)
+			c.CPUAllowed = float64(x)
 			cmap[c.ID] = c
 		}
 	}
@@ -109,44 +109,60 @@ func GetClusterContainers2() []Container {
 	}
 	memUsage, memSpec, cpuTime := categorizeMetrics(metricLines)
 
-	for _, m := range metricLines {
-		fmt.Println(m)
+	cmap, err := getContainers(ctx)
+	if err != nil {
+		log.Printf("Error retrieving containers: %v\n", err)
+		return containers
 	}
-	//fmt.Printf("Data received: %v\n", metricLines)
+
+	// pull the prev variables into our new map
+	for k, v := range containerMap {
+		if c, ok := cmap[k]; ok {
+			c.PrevCPUMS = v.PrevCPUMS
+			c.PrevReadingTime = v.PrevReadingTime
+			cmap[k] = c
+		}
+	}
+	// now range over the new map and pull in metrics
+	for k, v := range cmap {
+		if val, ok := memUsage[k]; ok {
+			v.MemUsage = int(val.Value)
+		}
+		if val, ok := memSpec[k]; ok {
+			v.MemAllowed = int(val.Value)
+		}
+		if val, ok := cpuTime[k]; ok {
+			v.NewCPUMS = val.Value
+			v.NewReadingTime = val.TimeStamp
+		}
+		v.MemPercent = float64(v.MemUsage) / float64(v.MemAllowed)
+		v.CPUUsage = calculateCPUUsage(v.PrevReadingTime,
+			v.NewReadingTime,
+			v.NewCPUMS,
+			v.PrevCPUMS,
+			v.CPUAllowed)
+		v.PrevCPUMS = v.NewCPUMS
+		v.PrevReadingTime = v.NewReadingTime
+		cmap[k] = v
+		containers = append(containers, v)
+	}
+	containerMap = cmap
 	return containers
-	//	podMetrics, err := DmetricsClient.MetricsV1beta1().PodMetricses(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
-	//	if err != nil {
-	//		fmt.Println("Error collecting metrics:", err)
-	//		return containers
-	//	}
-	//	for _, podMetric := range podMetrics.Items {
-	//
-	//		//var ok bool
-	//		//	if c, ok = cmap[containerName]; !ok {
-	//		//			continue
-	//		//		}
-	//		podContainers := podMetric.Containers
-	//		for _, container := range podContainers {
-	//			c := Container{}
-	//			i, _ := container.Usage.Cpu().AsInt64()
-	//			c.CPU = float64(i) / c.CPU
-	//			i, _ = container.Usage.Memory().AsInt64()
-	//			c.MemUsage = int(i)
-	//			c.Name = container.Name
-	//			c.MemPercent = float64(c.MemUsage) / float64(c.MemAllowed)
-	//			containers = append(containers, c)
-	//		}
-	//	}
-	//
-	//	return containers
 }
 
 type NodeID string
 
 // sum (rate (container_cpu_usage_seconds_total{id="/"}[1m])) / sum (machine_cpu_cores) * 100
 // https://stackoverflow.com/questions/40327062/how-to-calculate-containers-cpu-usage-in-kubernetes-with-prometheus-as-monitori#40391872
-func calculateCPUUsage() {
+func calculateCPUUsage(prevTime, curTime time.Time, prevSeconds, curSeconds int64, allowed float64) float64 {
+	// don't do CPU calculations if things haven't changed or this is our first read
+	if curTime.Equal(prevTime) || prevTime.Equal(time.Time{}) {
+		return 0
+	}
+	diff := curSeconds - prevSeconds
+	duration := curTime.Sub(prevTime)
 
+	return float64(diff) / float64(duration.Milliseconds())
 }
 
 func categorizeMetrics(metrics []string) (memUsage, memSpec, cpuTime map[string]Metric) {

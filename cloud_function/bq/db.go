@@ -185,7 +185,7 @@ func queryContainers(ctx context.Context, client *bigquery.Client, data QuarterH
 				{Value: container.Image},
 				{Value: container.Name},
 				{Value: container.Created},
-				{Value: container.CPU},
+				{Value: container.CPUUsage},
 				{Value: container.MemUsage},
 				{Value: container.MemAllowed},
 				{Value: container.MemPercent},
