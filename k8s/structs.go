@@ -18,5 +18,5 @@ type Container struct {
 }
 
 func (c Container) String() string {
-	return fmt.Sprintf("Name: %s\nImage: %s\nID:%s\n", c.Name, c.Image, c.ID)
+	return fmt.Sprintf("Name: %s\nImage: %s\nID: %s\n", c.Name, c.Image, c.ID)
 }

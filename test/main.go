@@ -31,10 +31,11 @@ func init() {
 }
 
 func main() {
-	x, _ := getContainers(context.TODO())
-	for _, c := range x {
-		fmt.Printf("%s\n", c.String())
-	}
+	//	x, _ := getContainers(context.TODO())
+	//	for _, c := range x {
+	//		fmt.Printf("%s\n", c.String())
+	//	}
+	GetClusterContainers2()
 	//	fmt.Printf("%v\n", x)
 	//	fmt.Printf("Number of containers: %d\n", len(x))
 }
@@ -49,13 +50,13 @@ func getContainers(ctx context.Context) (containers []Container, err error) {
 	}
 	for _, pod := range pods.Items {
 		for i, container := range pod.Status.ContainerStatuses {
-			containerName := pod.Name + "::" + container.Name
 			var c Container
 			running := container.State.Running
+			// we only want to consider running containers
 			if running == nil {
 				continue
 			}
-			c.ID = container.ContainerID
+			c.ID = strings.ReplaceAll(container.ContainerID, "containerd://", "")
 			c.Name = container.Name
 			c.Image = container.Image
 			c.Created = running.StartedAt.Time
@@ -64,7 +65,7 @@ func getContainers(ctx context.Context) (containers []Container, err error) {
 			c.MemAllowed = int(x)
 			x, _ = pod.Spec.Containers[i].Resources.Limits.Cpu().AsInt64()
 			c.CPU = float64(x)
-			cmap[containerName] = c
+			cmap[c.ID] = c
 		}
 	}
 	for _, v := range cmap {
@@ -73,16 +74,38 @@ func getContainers(ctx context.Context) (containers []Container, err error) {
 	return
 }
 
+// Get a listing of all the nodes
+// Then get a list of all the pods
+// extract each container from each pod
+// fill in all definitions for the containers
+// for each node, grab the RAW data using a rest client
+// filter all data out to the required parameters for node
+// append all strings into a single slice
+// parse all filtered strings into individual types
+// create maps for filtered strings and match against containers using IDs or names
 func GetClusterContainers2() []Container {
 	var containers []Container
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
-
-	d, err := k8sClient.RESTClient().Get().AbsPath("/api/v1/nodes/den-shasta-k8s-cp-01/proxy/metrics/cadvisor").DoRaw(ctx)
+	nodes, err := GetNodeIDs(ctx)
+	metricLines := []string{}
 	if err != nil {
-		fmt.Printf("Error sending rest: %v\n", err)
+		log.Printf("Error fetching node IDs: %v\n", err)
 	}
-	fmt.Printf("Data received: %s\n", string(d))
+	for _, nodeID := range nodes {
+		d, err := k8sClient.RESTClient().
+			Get().AbsPath(fmt.Sprintf("/api/v1/nodes/%s/proxy/metrics/cadvisor",
+			nodeID)).DoRaw(ctx)
+		if err != nil {
+			fmt.Printf("Error sending rest: %v\n", err)
+			continue
+		}
+		metricLines = append(metricLines, FilterCAdvisor(d)...)
+	}
+	for _, m := range metricLines {
+		fmt.Println(m)
+	}
+	//fmt.Printf("Data received: %v\n", metricLines)
 	return containers
 	//	podMetrics, err := DmetricsClient.MetricsV1beta1().PodMetricses(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	//	if err != nil {
@@ -130,6 +153,11 @@ func FilterCAdvisor(in []byte) []string {
 	for _, s := range split {
 		for _, variable := range variables {
 			if strings.HasPrefix(s, variable) {
+				// ignore metrics relating to drivers, kubelet, etc. since they
+				// don't relate to a pod or container
+				if strings.Contains(s, "name=\"\"") || strings.Contains(s, "pod=\"\"") {
+					break
+				}
 				toKeep = append(toKeep, s)
 				break
 			}
