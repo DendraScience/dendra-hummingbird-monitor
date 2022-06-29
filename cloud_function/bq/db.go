@@ -181,8 +181,11 @@ func queryContainers(ctx context.Context, client *bigquery.Client, data QuarterH
 		} else {
 			qstring += "(?,?,?,?,?,?,?,?,?,?,?,?),"
 		}
+		if container.Node == "" {
+			container.Node = data.Hostname
+		}
 		qps = append(qps,
-			[]bigquery.QueryParameter{{Value: data.Hostname},
+			[]bigquery.QueryParameter{{Value: container.Node},
 				{Value: data.Version},
 				{Value: container.ID},
 				{Value: data.Timestamp},

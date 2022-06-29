@@ -65,6 +65,11 @@ func getContainerMap(ctx context.Context) (containers map[string]Container, err 
 	return cmap, nil
 }
 
+type NodeMetric struct {
+	Metric string
+	Node   string
+}
+
 // Get a listing of all the nodes
 // Then get a list of all the pods
 // extract each container from each pod
@@ -79,7 +84,7 @@ func GetClusterContainers() []Container {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
 	nodes, err := GetNodeIDs(ctx)
-	metricLines := []string{}
+	metricLines := []NodeMetric{}
 	if err != nil {
 		log.Printf("Error fetching node IDs: %v\n", err)
 		return containers
@@ -94,7 +99,7 @@ func GetClusterContainers() []Container {
 			continue
 		}
 		// filter the results and add them to our slice of metrics
-		metricLines = append(metricLines, FilterCAdvisor(d)...)
+		metricLines = append(metricLines, FilterCAdvisor(d, string(nodeID))...)
 	}
 	memUsage, memSpec, cpuTime := categorizeMetrics(metricLines)
 	cmap, err := getContainerMap(ctx)
@@ -114,13 +119,16 @@ func GetClusterContainers() []Container {
 	for k, v := range cmap {
 		if val, ok := memUsage[k]; ok {
 			v.MemUsage = int(val.Value)
+			v.Node = val.Node
 		}
 		if val, ok := memSpec[k]; ok {
 			v.MemAllowed = int(val.Value)
+			v.Node = val.Node
 		}
 		if val, ok := cpuTime[k]; ok {
 			v.NewCPUMS = val.Value
 			v.NewReadingTime = val.TimeStamp
+			v.Node = val.Node
 		}
 		v.MemPercent = float64(v.MemUsage) / float64(v.MemAllowed)
 		if v.MemAllowed == 0 {
@@ -157,7 +165,7 @@ func calculateCPUUsage(prevTime, curTime time.Time, prevSeconds, curSeconds int6
 	return float64(diff) / float64(duration.Milliseconds())
 }
 
-func categorizeMetrics(metrics []string) (memUsage, memSpec, cpuTime map[string]Metric) {
+func categorizeMetrics(metrics []NodeMetric) (memUsage, memSpec, cpuTime map[string]Metric) {
 	// See the following example metric:
 	//
 	// container_memory_usage_bytes{container="main",id="/system.slice/containerd.service/kubepods-burstable-pod811bce1a_b926_49c6_af1c_115c2a06df25.slice:cri-containerd:f81d390115234186549def0dd6aa82f15c4afa264b8394d6e7a1559bc04b753f",image="docker.io/library/influxdb:1.8.10",name="f81d390115234186549def0dd6aa82f15c4afa264b8394d6e7a1559bc04b753f",namespace="default",pod="influxdb-v1-cdfw-m1-0"} 3.269632e+08 1656209471742
@@ -171,18 +179,19 @@ func categorizeMetrics(metrics []string) (memUsage, memSpec, cpuTime map[string]
 	valueStripper := regexp.MustCompile(`.*{.*}`)
 	for _, m := range metrics {
 		// first, find and extract the containerd id for the metric
-		matches := nameFinder.FindStringSubmatch(m)
+		matches := nameFinder.FindStringSubmatch(m.Metric)
 		if len(matches) != 2 {
 			log.Printf("Error: could not find name in %s\n", m)
 			continue
 		}
 		name := matches[1]
-		if strings.HasPrefix(m, "container_spec_memory_limit_bytes") {
+		if strings.HasPrefix(m.Metric, "container_spec_memory_limit_bytes") {
 			var metric Metric
 			metric.ID = name
-			m = valueStripper.ReplaceAllLiteralString(m, "")
-			m = strings.TrimSpace(m)
-			flt, _, err := big.ParseFloat(m, 10, 0, big.ToNearestEven)
+			metric.Node = m.Node
+			m.Metric = valueStripper.ReplaceAllLiteralString(m.Metric, "")
+			m.Metric = strings.TrimSpace(m.Metric)
+			flt, _, err := big.ParseFloat(m.Metric, 10, 0, big.ToNearestEven)
 			if err != nil {
 				log.Printf("Error parsing value for mem spec: %v :: %s\n", err, m)
 				continue
@@ -191,12 +200,13 @@ func categorizeMetrics(metrics []string) (memUsage, memSpec, cpuTime map[string]
 			i, _ = flt.Int(i)
 			metric.Value = i.Int64()
 			memSpec[name] = metric
-		} else if strings.HasPrefix(m, "container_memory_usage_bytes") {
+		} else if strings.HasPrefix(m.Metric, "container_memory_usage_bytes") {
 			var metric Metric
 			metric.ID = name
-			m = valueStripper.ReplaceAllLiteralString(m, "")
-			m = strings.TrimSpace(m)
-			values := strings.Split(m, " ")
+			metric.Node = m.Node
+			m.Metric = valueStripper.ReplaceAllLiteralString(m.Metric, "")
+			m.Metric = strings.TrimSpace(m.Metric)
+			values := strings.Split(m.Metric, " ")
 			if len(values) != 2 {
 				log.Printf("Error: Expected usage string to have two values, but one was found: %s\n", m)
 				continue
@@ -216,12 +226,13 @@ func categorizeMetrics(metrics []string) (memUsage, memSpec, cpuTime map[string]
 			i, _ = flt.Int(i)
 			metric.Value = i.Int64()
 			memUsage[name] = metric
-		} else if strings.HasPrefix(m, "container_cpu_usage_seconds_total") {
+		} else if strings.HasPrefix(m.Metric, "container_cpu_usage_seconds_total") {
 			var metric Metric
 			metric.ID = name
-			m = valueStripper.ReplaceAllLiteralString(m, "")
-			m = strings.TrimSpace(m)
-			values := strings.Split(m, " ")
+			metric.Node = m.Node
+			m.Metric = valueStripper.ReplaceAllLiteralString(m.Metric, "")
+			m.Metric = strings.TrimSpace(m.Metric)
+			values := strings.Split(m.Metric, " ")
 			if len(values) != 2 {
 				log.Printf("Error: Expected usage string to have two values, but one was found: %s\n", m)
 				continue
@@ -245,14 +256,14 @@ func categorizeMetrics(metrics []string) (memUsage, memSpec, cpuTime map[string]
 }
 
 // Pull out all variables that we need and drop the rest
-func FilterCAdvisor(in []byte) []string {
+func FilterCAdvisor(in []byte, node string) []NodeMetric {
 	input := string(in)
 	split := strings.Split(input, "\n")
 	variables := []string{"container_memory_usage_bytes",
 		"container_spec_memory_limit_bytes",
 		//		"machine_cpu_cores",
 		"container_cpu_usage_seconds_total"}
-	toKeep := []string{}
+	toKeep := []NodeMetric{}
 	for _, s := range split {
 		for _, variable := range variables {
 			if strings.HasPrefix(s, variable) {
@@ -261,7 +272,7 @@ func FilterCAdvisor(in []byte) []string {
 				if strings.Contains(s, "name=\"\"") || strings.Contains(s, "pod=\"\"") {
 					break
 				}
-				toKeep = append(toKeep, s)
+				toKeep = append(toKeep, NodeMetric{Node: node, Metric: s})
 				break
 			}
 		}

@@ -7,6 +7,7 @@ import (
 
 type Metric struct {
 	ID        string
+	Node      string
 	Value     int64
 	TimeStamp time.Time
 }
@@ -14,6 +15,7 @@ type Metric struct {
 type Container struct {
 	ID              string    `json:"id"`
 	Name            string    `json:"name"`
+	Node            string    `json:"node"`
 	CPUUsage        float64   `json:"cpu"`
 	CPUAllowed      float64   `json:"-"`
 	MemUsage        int       `json:"mem_usage"`
