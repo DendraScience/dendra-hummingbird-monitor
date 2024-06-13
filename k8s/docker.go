@@ -3,11 +3,11 @@ package k8s
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
-	"log"
-
 	"github.com/docker/docker/api/types"
+	dcont "github.com/docker/docker/api/types/container"
 	"github.com/moby/moby/client"
 )
 
@@ -30,7 +30,7 @@ func GetContainers() []Container {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
 
-	containerSet, err := mobyClient.ContainerList(ctx, types.ContainerListOptions{All: false, Limit: -1})
+	containerSet, err := mobyClient.ContainerList(ctx, dcont.ListOptions{All: true, Limit: -1})
 	if err != nil {
 		log.Printf("Error fetching the container list: %s", err.Error())
 		return containers
