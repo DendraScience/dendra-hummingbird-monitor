@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	SemVer  string = "1.0.0"
+	SemVer  string = "1.0.1"
 	Package string = "dendra_hummingbird_monitor"
 )
 
@@ -56,8 +56,8 @@ func init() {
 		fmt.Printf("Initialization success...\n")
 	}
 	hostname = proc.GetHostname()
-
 }
+
 func main() {
 	for {
 		var stats QuarterHourly
