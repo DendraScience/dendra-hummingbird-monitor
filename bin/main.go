@@ -59,6 +59,9 @@ func init() {
 }
 
 func main() {
+	if *isPrimaryControlPlane {
+		k8s.Init()
+	}
 	for {
 		var stats QuarterHourly
 		var err error

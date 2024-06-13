@@ -3,13 +3,12 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/big"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-
-	"log"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,7 +21,7 @@ var (
 	containerMap map[string]Container
 )
 
-func init() {
+func Init() {
 	config, err := clientcmd.BuildConfigFromFlags("", "/root/.kube/config")
 	if err != nil {
 		panic(err)
@@ -196,7 +195,7 @@ func categorizeMetrics(metrics []NodeMetric) (memUsage, memSpec, cpuTime map[str
 				log.Printf("Error parsing value for mem spec: %v :: %s\n", err, m)
 				continue
 			}
-			var i = new(big.Int)
+			i := new(big.Int)
 			i, _ = flt.Int(i)
 			metric.Value = i.Int64()
 			memSpec[name] = metric
@@ -222,7 +221,7 @@ func categorizeMetrics(metrics []NodeMetric) (memUsage, memSpec, cpuTime map[str
 				log.Printf("Error parsing value for mem usage: %v :: %s\n", err, m)
 				continue
 			}
-			var i = new(big.Int)
+			i := new(big.Int)
 			i, _ = flt.Int(i)
 			metric.Value = i.Int64()
 			memUsage[name] = metric
@@ -259,10 +258,12 @@ func categorizeMetrics(metrics []NodeMetric) (memUsage, memSpec, cpuTime map[str
 func FilterCAdvisor(in []byte, node string) []NodeMetric {
 	input := string(in)
 	split := strings.Split(input, "\n")
-	variables := []string{"container_memory_usage_bytes",
+	variables := []string{
+		"container_memory_usage_bytes",
 		"container_spec_memory_limit_bytes",
 		//		"machine_cpu_cores",
-		"container_cpu_usage_seconds_total"}
+		"container_cpu_usage_seconds_total",
+	}
 	toKeep := []NodeMetric{}
 	for _, s := range split {
 		for _, variable := range variables {
