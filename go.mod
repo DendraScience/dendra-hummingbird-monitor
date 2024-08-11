@@ -59,7 +59,7 @@ replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.24.2
 require (
 	cloud.google.com/go/bigquery v1.61.0
 	github.com/BurntSushi/toml v1.1.0
-	github.com/docker/docker v27.0.0+incompatible
+	github.com/docker/docker v27.1.1+incompatible
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/jaypipes/ghw v0.8.0
 	github.com/moby/moby v27.0.0+incompatible
