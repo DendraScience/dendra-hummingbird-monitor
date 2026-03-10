@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	dcont "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
@@ -37,7 +36,7 @@ func GetContainers() []Container {
 	}
 	for _, c := range containerSet {
 		var container Container
-		var v *types.StatsJSON
+		var v *dcont.StatsResponse
 
 		stats, err := mobyClient.ContainerStatsOneShot(ctx, c.ID)
 		if err != nil {

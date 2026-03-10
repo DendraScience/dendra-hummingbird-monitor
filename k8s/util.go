@@ -4,9 +4,9 @@
 // to include this code without attribution, hence this comment.
 package k8s
 
-import "github.com/docker/docker/api/types"
+import "github.com/docker/docker/api/types/container"
 
-func calculateCPUPercentUnix(previousCPU, previousSystem uint64, v *types.StatsJSON) float64 {
+func calculateCPUPercentUnix(previousCPU, previousSystem uint64, v *container.StatsResponse) float64 {
 	var (
 		cpuPercent = 0.0
 		// calculate the change for the cpu usage of the container in between readings
@@ -25,7 +25,7 @@ func calculateCPUPercentUnix(previousCPU, previousSystem uint64, v *types.StatsJ
 	return cpuPercent
 }
 
-func calculateMemUsageUnixNoCache(mem types.MemoryStats) float64 {
+func calculateMemUsageUnixNoCache(mem container.MemoryStats) float64 {
 	// cgroup v1
 	if v, isCgroup1 := mem.Stats["total_inactive_file"]; isCgroup1 && v < mem.Usage {
 		return float64(mem.Usage - v)
@@ -46,7 +46,7 @@ func calculateMemPercentUnixNoCache(limit float64, usedNoCache float64) float64 
 	return 0
 }
 
-func calculateNetwork(network map[string]types.NetworkStats) (float64, float64) {
+func calculateNetwork(network map[string]container.NetworkStats) (float64, float64) {
 	var rx, tx float64
 
 	for _, v := range network {
